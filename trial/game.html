@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flappy Bird Game</title>
+  <style>
+    canvas {
+      background-color: #70c5ce;
+      display: block;
+      margin: auto;
+    }
+  </style>
+</head>
+<body>
+  <h2 id="welcomeMessage"></h2>
+  <canvas id="gameCanvas" width="320" height="480"></canvas>
+
+  <script>
+    const playerName = localStorage.getItem('playerName');
+    document.getElementById('welcomeMessage').textContent = `Hello, ${playerName}!`;
+
+    // Game Variables
+    const canvas = document.getElementById('gameCanvas');
+    const context = canvas.getContext('2d');
+    const bird = { x: 50, y: 150, width: 30, height: 30, gravity: 0.6, lift: -15, velocity: 0 };
+    const pipes = [];
+    const pipeWidth = 40;
+    const gap = 100;
+    let score = 0;
+
+    // Load Open Source Images
+    const birdImg = new Image();
+    birdImg.src = 'path/to/bird.png'; // Replace with an open-source bird image URL
+    const pipeImg = new Image();
+    pipeImg.src = 'path/to/pipe.png'; // Replace with an open-source pipe image URL
+
+    // Initialize Game
+    document.addEventListener('keydown', () => bird.velocity = bird.lift);
+    function spawnPipe() {
+      const pipeHeight = Math.floor(Math.random() * (canvas.height - gap));
+      pipes.push({ x: canvas.width, y: pipeHeight });
+    }
+    setInterval(spawnPipe, 1500);
+
+    function draw() {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Bird
+      bird.velocity += bird.gravity;
+      bird.y += bird.velocity;
+      context.drawImage(birdImg, bird.x, bird.y, bird.width, bird.height);
+
+      // Pipes
+      pipes.forEach((pipe, index) => {
+        pipe.x -= 2;
+        context.drawImage(pipeImg, pipe.x, 0, pipeWidth, pipe.y);
+        context.drawImage(pipeImg, pipe.x, pipe.y + gap, pipeWidth, canvas.height - pipe.y - gap);
+
+        // Collision Detection
+        if (
+          (bird.x < pipe.x + pipeWidth && bird.x + bird.width > pipe.x && 
+          (bird.y < pipe.y || bird.y + bird.height > pipe.y + gap)) ||
+          bird.y + bird.height >= canvas.height
+        ) {
+          location.reload(); // Reload the page on collision
+        }
+
+        // Scoring
+        if (pipe.x + pipeWidth < bird.x && !pipe.scored) {
+          score++;
+          pipe.scored = true;
+        }
+
+        // Remove off-screen pipes
+        if (pipe.x + pipeWidth < 0) pipes.splice(index, 1);
+      });
+
+      // Display Score
+      context.font = '20px Arial';
+      context.fillStyle = '#fff';
+      context.fillText(`Score: ${score}`, 10, 20);
+
+      requestAnimationFrame(draw);
+    }
+
+    birdImg.onload = () => draw(); // Start game once bird image is loaded
+  </script>
+</body>
+</html>
